@@ -7,7 +7,7 @@ PathJS is a lightweight, client-side routing library that allows you to create "
 * Supports the HTML5 History API, the 'onhashchange' method, and graceful degredation
 * Supports root routes, rescue methods, paramaterized routes, optional route components (dynamic routes), and Aspect Oriented Programming
 * Well Tested (tests available in the `./tests` directory)
-* Compatible with all major browsers (Tested on Firefox 3.6, Firefox 4.0, Firefox 5.0, Chrome 9, Opera 11, IE7, IE8, IE9)
+* Compatible with all major browsers (Tested on Firefox 3.6, Firefox 4.0, Firefox 5.0, Chrome 9, Opera 11, IE6, IE7, IE8, IE9)
 * Independant of all third party libraries, but plays nice with all of them
 
 # Using PathJS - A Brief Example #
