@@ -226,6 +226,7 @@ Path.core.route.prototype = {
         if(Path._ieFrame) {
             var _hash = location.hash;
             if(_hash && _hash !== Path._ieFrame.frameHash) {
+                _hash = _hash.replace(/"/g, '\\"');
                 var frameDoc = Path._ieFrame.document;
                 frameDoc.open();
                 //update iframe content to force new history record.
