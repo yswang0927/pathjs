@@ -1,5 +1,8 @@
+/*!
+ * yswang modify to support legacy IE(6,7)
+ */
 var Path = {
-    'version': "0.8.4",
+    'version': "0.8.5",
     'map': function (path) {
         if (Path.routes.defined.hasOwnProperty(path)) {
             return Path.routes.defined[path];
@@ -105,6 +108,9 @@ var Path = {
         }
     },
     'listen': function () {
+        // Add to hack legacy IE(6,7)
+        Path._hackLegacyIE();
+        
         var fn = function(){ Path.dispatch(location.hash); }
 
         if (location.hash === "") {
@@ -141,6 +147,32 @@ var Path = {
         'rescue': null,
         'previous': null,
         'defined': {}
+    },
+    // Add hack legacy IE(6,7)
+    '_ieFrame': null, //iframe used for legacy IE(6-7)
+    '_hackLegacyIE': function() {
+        if(Path._ieFrame) {
+            return;
+        }
+        //check if is IE6-7 since hash change is only supported on IE8+ and
+        //changing hash value on IE6-7 doesn't generate history record.
+        // (!+"\v1") -- check is IE
+        var _isLegacyIE = (!+"\v1") && !("onhashchange" in window && (!document.documentMode || document.documentMode >= 8));
+        if(!_isLegacyIE) {
+            return;
+        }
+        var _ieFrame = document.createElement('iframe');
+            _ieFrame.src = 'about:blank';
+            _ieFrame.style.display = 'none';
+            _ieFrame.setAttribute('tabindex', '-1');
+            _ieFrame.attachEvent('onload', function() {
+                if(Path._ieFrame.frameHash && Path._ieFrame.frameHash != window.location.hash) {
+                    window.location.hash = Path._ieFrame.frameHash;
+                }
+            });
+        document.body.appendChild(_ieFrame);
+        Path._ieFrame = _ieFrame.contentWindow;
+        _ieFrame = null;
     }
 };
 Path.core.route.prototype = {
@@ -177,7 +209,8 @@ Path.core.route.prototype = {
         if (Path.routes.defined[this.path].hasOwnProperty("do_enter")) {
             if (Path.routes.defined[this.path].do_enter.length > 0) {
                 for (i = 0; i < Path.routes.defined[this.path].do_enter.length; i++) {
-                    result = Path.routes.defined[this.path].do_enter[i].apply(this, null);
+                    // use call(this) instead of apply(this, null)
+                    result = Path.routes.defined[this.path].do_enter[i].call(this);
                     if (result === false) {
                         halt_execution = true;
                         break;
@@ -187,6 +220,18 @@ Path.core.route.prototype = {
         }
         if (!halt_execution) {
             Path.routes.defined[this.path].action();
+        }
+        
+        // support legacy IE(6,7) history record on hash changing.
+        if(Path._ieFrame) {
+            var _hash = location.hash;
+            if(_hash && _hash !== Path._ieFrame.frameHash) {
+                var frameDoc = Path._ieFrame.document;
+                frameDoc.open();
+                //update iframe content to force new history record.
+                frameDoc.write('<html><head><title>' + document.title + '</title><script type="text/javascript">var frameHash="' + _hash + '";</script></head><body>&nbsp;</body></html>');
+                frameDoc.close();
+            }
         }
     }
 };
