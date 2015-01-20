@@ -1,11 +1,37 @@
 /*!
- * modify by yswang at:
- * 2014/12/31 -> 0.8.5 supported IE6,7
- * 2015/01/04 -> 0.8.6 upgrade route path parsor
+ * Modified by yswang(wangys0927@gmail.com) at:
+ * 2014/12/31 -> 0.8.5 Supported legacy IE(6,7).
+ * 2015/01/04 -> 0.8.6 Upgrade route path parser.
+ * 2015/01/16 -> 0.9 Use new route path parser, now it's powerful!
+ * All supported route rules:
+ * 		/users                 // Static rule: Path.map('/users')
+ * 		/users/:id             // Named route parameter: Path.map('/users/:id') 
+ *							   // --> this.params['id']
+ * 		/users/:id(\\d+)       // Parameter muse be digits: Path.map('/users/:id(\\d+)')
+ *							   // --> this.params['id']
+ * 		/users/:id?            // Parameter is optional: Path.map('/users/:id?') 
+ *							   // --> this.params['id'] || 'undefined'
+ * 		/users/:id/:action     // Path.map('/users/:id/:action')
+ *							   // --> this.params['id'], this.params['action']
+ * 		/users/(\\d+)          // Regexp route parameter: Path.map('/users/(\\d+)')
+ *							   // --> this.params[0]
+ * 		/users/(\\d+)/(\\w+)   // Path.map('/users/(\\d+)/(\\w+)')
+ *							   // --> this.params[0], this.params[1]
+ * 		/users/:id/(\\w+)      // Named parameter and regexp parameter mixed use: Path.map('/users/:id/(\\w+)')
+ *							   // --> this.params['id'], this.params[0]
+ * 		/users/*               // Wildcard parameter: Path.map('/users/*') 
+ *							   // --> this.params[0] || 'undefined'
+ * 		['/A', '/B', '/C']	   // Array multi route, can matched any one given: Path.map(['/A', '/B', '/C'])
+ *		/^#\/comments\/(\d+)$/ // Regexp route: Path.map(/^#\/comments\/(\d+)$/)
+ * 
+ * Other:
+ * 		/users_:id_:action	  			   // /users_2_edit
+ * 		/get.:id..comments\\?p=:page(\\d+) // get.1202..comments?page=1
+ * 		/... as define yourself...					  
  */
 ;(function(window) {
     var Path = {
-        'version': "0.8.6",
+        'version': "0.9",
         'map': function (path) {
             var str_path = Path._pathToString(path);
             if(Path.routes.defined.hasOwnProperty(str_path)) {
@@ -167,9 +193,9 @@
                 .concat(strict ? '' : '/?')
                 // -- comment this to support path eg: /user/(\\d+)
                 //.replace(/\/\(/g, '(?:/')
-                .replace(/(\/)?(\.)?:(\w+)(?:(\(.*?\)))?(\?)?(\*)?/g, function(_, slash, format, key, capture, optional, star){
+                .replace(/(\/)?(\.)?:(\w+)(?:(\(.*?\)))?(\?)?(\*)?/g, function(_, slash, format, key, capture, optional, star) {
                   
-									_keys.push({'name': key, 'optional': !! optional});
+		  _keys.push({'name': key, 'optional': !! optional});
 
                   slash = slash || '';
                  
