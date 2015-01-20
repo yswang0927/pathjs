@@ -1,6 +1,6 @@
 # Modify - [Mtrpcic PathJS](https://github.com/mtrpcic/pathjs):#
-## Add support legacy IE(6,7)
-## Use new powerful route parser
+* Add support legacy IE(6,7)
+* Use new powerful route parser
 
 # PathJS #
 
