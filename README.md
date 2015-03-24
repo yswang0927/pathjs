@@ -119,7 +119,6 @@ The above route will match both of the following:
 
 ## All supported Route rules
 
-<<<<<<< HEAD
     /users                 // Static rule: Path.map('/users')
                               //
     /users/:id             // Named route parameter: Path.map('/users/:id') 
@@ -147,21 +146,6 @@ The above route will match both of the following:
     /users_:id_:action                 // /users_2_edit
     /get.:id..comments\\?p=:page(\\d+) // get.1202..comments?page=1
     /... as define yourself...                    
-=======
-    /users
-    /users/:id              // this.params['id']
-    /users/:id(\\\d+)       // this.params['id']
-    /users/:id?             // this.params['id'] || 'undefined'
-    /users/:id/:action      // this.params['id'], this.params['action']
-    /users/(\\\d+)          // this.params[0]
-    /users/(\\\d+)/(\\\w+)  // this.params[0], this.params[1]
-    /users/:id/(\\\w+)      // this.params['id'], this.params[0]
-    /users/*                // thks.params[0] || 'undefined'
-    
-    /users_:id_:action
-    /users/:id\\\?p=:page
-    /get.:uid..comments
->>>>>>> 88f7ee6c36e7f0da5877bbd62ab6debbca445c8f
     
 
 ## Root Route
