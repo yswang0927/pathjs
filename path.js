@@ -195,7 +195,7 @@
                 //.replace(/\/\(/g, '(?:/')
                 .replace(/(\/)?(\.)?:(\w+)(?:(\(.*?\)))?(\?)?(\*)?/g, function(_, slash, format, key, capture, optional, star) {
                   
-		  _keys.push({'name': key, 'optional': !! optional});
+				  _keys.push({'name': key, 'optional': !! optional});
 
                   slash = slash || '';
                  
