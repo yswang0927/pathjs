@@ -66,24 +66,24 @@
 	    
 		<div class="nav">
 			<ul>
-				<li><a href="#/about">About</a></li>
-				<li><a href="#/page">Page</a></li>
-				<li><a href="#/page/Page-1">Page-1</a></li>
-				<li><a href="#/page/页面-2">页面-2</a></li>
-				<li><a href="#/page/页面-3">页面-3</a></li>
-				<li><a href="#get.1234.mime">get.1234.mime</a></li>
-				<li><a href="#get.586985.home">get.586985.home</a></li>
-				<li><a href="#get.5869ab.home">get.5869ab.home - 不是数字</a></li>
-				<li><a href="#get.48523..comments.list">get.48523..comments.list</a></li>
-				<li><a href="#list.200.3">list.200.3</a></li>
-				<li><a href="#list/2a34da34/3">list/2a34da34/3</a></li>
-				<li><a href="#list/2a34da34/">list/2a34da34/</a></li>
-				<li><a href="#/users/1/comments.list?page=2">/users/1/comments.list?page=2</a></li>
-				<li><a href="#/a">/a</a></li>
-				<li><a href="#/b">/b</a></li>
-				<li><a href="#/c">/c</a></li>
-				<li><a href="#/100">/100</a></li>
-				<li><a href="#/200">/200</a></li>
+				<li><a href="#!/about">About</a></li>
+				<li><a href="#!/page">Page</a></li>
+				<li><a href="#!/page/Page-1">Page-1</a></li>
+				<li><a href="#!/page/页面-2">页面-2</a></li>
+				<li><a href="#!/page/页面-3">页面-3</a></li>
+				<li><a href="#!get.1234.mime">get.1234.mime</a></li>
+				<li><a href="#!get.586985.home">get.586985.home</a></li>
+				<li><a href="#!get.5869ab.home">get.5869ab.home - 不是数字</a></li>
+				<li><a href="#!get.48523..comments.list">get.48523..comments.list</a></li>
+				<li><a href="#!list.200.3">list.200.3</a></li>
+				<li><a href="#!list/2a34da34/3">list/2a34da34/3</a></li>
+				<li><a href="#!list/2a34da34/">list/2a34da34/</a></li>
+				<li><a href="#!/users/1/comments.list?page=2">/users/1/comments.list?page=2</a></li>
+				<li><a href="#!/a">/a</a></li>
+				<li><a href="#!/b">/b</a></li>
+				<li><a href="#!/c">/c</a></li>
+				<li><a href="#!/100">/100</a></li>
+				<li><a href="#!/200">/200</a></li>
 			</ul>
 		</div>
 
@@ -93,7 +93,7 @@
 		<div class="code">
 <pre><code>
 // 普通URL路径
-Path.map('#/about').enter(function() {
+Path.map('/about').enter(function() {
 	// TODO
 }).to(function() {
 	// TODO
@@ -102,35 +102,35 @@ Path.map('#/about').enter(function() {
 });
 
 // 带命名参数的URL路径，且命名参数是可选的
-Path.map('#/page/:pageid?').to(function() {
+Path.map('/page/:pageid?').to(function() {
 	// this.params['pageid']
 });
 
 // 带命名参数的URL路径，且命名被正则限定了类型
-Path.map('#get.:bid(\\d+).:btype').to(function() {
+Path.map('get.:bid(\\d+).:btype').to(function() {
 	// this.params['bid'], 
 	// this.params['btype'];
 });
 
 // 带命名参数的URL路径
-Path.map('#get.:bid..comments.list').to(function() {
+Path.map('get.:bid..comments.list').to(function() {
 	// this.params['bid'];
 });
 
 // 使用正则定义作为参数的URL路径
-Path.map('#list.(\\d+).(\\d+)').to(function() {
+Path.map('list.(\\d+).(\\d+)').to(function() {
 	// this.params[0]
 	// this.params[1]
 });
 
 // 使用正则定义作为参数的URL路径
-Path.map('#list/:id/*').to(function() {
+Path.map('list/:id/*').to(function() {
 	// this.params['id'], this.params.id
 	// this.params[0]
 });
 
 // 使用数组定义匹配任意一个的URL路径
-Path.map(['#/a', '#/b', '#/c']).to(function() {
+Path.map(['/a', '/b', '/c']).to(function() {
 	
 });
 
@@ -140,7 +140,7 @@ Path.map(/^#\/(\d+)$/).to(function() {
 });
 
 // 默认跳转到哪个URL路径
-Path.root('#/about');
+Path.root('/about');
 
 // 当所定义的全部URL路径都不匹配时，将执行这个函数
 Path.rescue(function() {
@@ -162,7 +162,7 @@ Path.rescue(function() {
 									+ str;
 	}
 
-	Path.map('#/about').enter(function() {
+	Path.map('/about').enter(function() {
 		$id('content').className = 'page-in';
 	}).to(function() {
 		updateContent.call(this, 'PathJS is a lightweight, client-side routing library that allows you to create "single page" applications using Hashbangs and/or HTML5 pushState.');
@@ -170,12 +170,12 @@ Path.rescue(function() {
 		$id('content').className = 'page-out';
 	});
 
-	Path.map('#/page/:pageid?').to(function() {
+	Path.map('/page/:pageid?').to(function() {
 		var pid = this.params['pageid'];
 		updateContent.call(this, 'this.params[\'pageid\'] = '+ (pid || 'NaN'));
 	});
 
-	Path.map('#get.:bid(\\d+).:btype').to(function() {
+	Path.map('get.:bid(\\d+).:btype').to(function() {
 		var bid = this.params['bid'], 
 			btype = this.params['btype'];
 		updateContent.call(this, 
@@ -183,18 +183,18 @@ Path.rescue(function() {
 			+ '<br>this.params[\'btype\']= ' + btype);
 	});
 
-	Path.map('#get.:bid..comments.list').to(function() {
+	Path.map('get.:bid..comments.list').to(function() {
 		var bid = this.params['bid'];
 		updateContent.call(this, 'this.params[\'bid\']= '+ bid);
 	});
 
-	Path.map('#list.(\\d+).(\\d+)').to(function() {
+	Path.map('list.(\\d+).(\\d+)').to(function() {
 		updateContent.call(this,
 			'this.params[0]= ' + this.params[0] 
 			+ '<br>this.params[1]= ' + this.params[1]);
 	});
 
-	Path.map('#list/:id/*').to(function() {
+	Path.map('list/:id/*').to(function() {
 		updateContent.call(this,
 			'this.params[\'id\']= '+ this.params['id']
 			+ (this.params[0] ? '<br>this.params[0]= '+ this.params[0] : '')
@@ -202,7 +202,7 @@ Path.rescue(function() {
 	});
 
 	// /users/1/comments.list.1
-	Path.map('#/users/:id/(\\w+).:action\\?page=(\\d+)').to(function() {
+	Path.map('/users/:id/(\\w+).:action\\?page=(\\d+)').to(function() {
 		updateContent.call(this,
 			'this.params[\'id\']= '+ this.params['id']
 			+ '<br>this.params[0]= ' + this.params[0]
@@ -211,16 +211,16 @@ Path.rescue(function() {
 			);
 	});
 
-	Path.map(['#/a', '#/b', '#/c']).to(function() {
+	Path.map(['/a', '/b', '/c']).to(function() {
 		updateContent.call(this, 'Matched');
 	});
 
-	Path.map(/^#\/(\d+)$/).to(function() {
+	Path.map(/^\/(\d+)$/).to(function() {
 		updateContent.call(this, 'Matched');
 	});
 
 
-	Path.root('#/about');
+	Path.root('/about');
 
 	Path.rescue(function() {
 		updateContent('404! Not match any path defined!');

@@ -9,57 +9,58 @@
 		};
 
 		var hrefs = [
-		    "/A",
+			"/A",
 			"/B",
 			"/C",
 			"/D1",
-            "/D2",
+			"/D2",
 			"/E/params/1/parse",
 			"/E/params/2/parse",
 			"/E/params/3/check",
 			"/F",
 			"/G",
-            "/H",
-            "/H/10",
-            "/H/10/20"
-	    ];
+			"/H",
+			"/H/10",
+			"/H/10/20"
+		];
 		var index = 0;
 		var timer = null;
 		
 		function update(str){
-		    var d = document.getElementById("actual");
+			var d = document.getElementById("actual");
 			text = d.innerHTML;
 			d.innerHTML = d.innerHTML + ((text == "") ? "" : "::") + str;
 		}
 		
 		function run_route(){
 		    if(index <= hrefs.length){
-                if(index == hrefs.length){
-                    window.history.go(-1);
-                } else {
-                    Path.history.pushState({}, "", hrefs[index]);
-                }
+						if(index == hrefs.length){
+								window.history.go(-1);
+						} else {
+								//Path.history.pushState({}, "", hrefs[index]);
+								Path.to(hrefs[index]);
+						}
 
 			    index++;
 			} else {
 			    clearInterval(timer);
 				
-				var expected = document.getElementById("expected");
-				var actual = document.getElementById("actual");
-				var grade = document.getElementById("grade");
-				
-				if(expected.innerHTML.trim() == actual.innerHTML.trim()){
-				    grade.innerHTML = "PASS";
-					grade.style.color = "#00FF00";
-				} else {
-				    grade.innerHTML = "FAIL";
-					grade.style.color = "#FF0000";
-				}
+					var expected = document.getElementById("expected");
+					var actual = document.getElementById("actual");
+					var grade = document.getElementById("grade");
+					
+					if(expected.innerHTML.trim() == actual.innerHTML.trim()){
+							grade.innerHTML = "PASS";
+							grade.style.color = "#00FF00";
+					} else {
+							grade.innerHTML = "FAIL";
+							grade.style.color = "#FF0000";
+					}
 			}
 		}
 		
 		function define_routes(){
-		    Path.map("/A").enter(function(){
+			Path.map("/A").enter(function(){
 			    update("A[enter]");
 			}).to(function(){
 			    update("A[action]");
@@ -121,20 +122,22 @@
 			    update("G[action - NOT HIT]");
 			});
 
-            Path.map("/H(/:id_one)(/:id_two)").to(function(){
-	            var id_one = this.params["id_one"] || "N/A";
-	            var id_two = this.params["id_two"] || "N/A";
-                update("H(one=" + id_one + ", two=" + id_two + ")");
-            });
+			Path.map("/H/:id_one?/:id_two?").to(function(){
+				var id_one = this.params["id_one"] || "N/A";
+				var id_two = this.params["id_two"] || "N/A";
+					update("H(one=" + id_one + ", two=" + id_two + ")");
+			});
 			
 			Path.rescue(function(){
 			    update("RESCUE");
 			});
 
-            Path.history.listen(true);
+			Path.history.listen({
+				fallback: true
+			});
 			
-		    timer = setInterval(run_route, 500);
-	    }
+			timer = setInterval(run_route, 300);
+		}
 		</script>
 
 	<style type="text/css">

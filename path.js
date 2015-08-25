@@ -1,91 +1,72 @@
 /*!
- * Modified by yswang(wangys0927@gmail.com) at:
- * 2014/12/31 -> 0.8.5 Supported legacy IE(6,7).
+ * 山哥(wangys0927@gmail.com) at:
+ * 2015/08/25 -> 1.0 See README.md
+ * 2015/01/16 -> 0.9 Use new route path parser, now it's powerful!	
  * 2015/01/04 -> 0.8.6 Upgrade route path parser.
- * 2015/01/16 -> 0.9 Use new route path parser, now it's powerful!
- * All supported route rules:
- * 		/users                 // Static rule: Path.map('/users')
- * 		/users/:id             // Named route parameter: Path.map('/users/:id') 
- *							   // --> this.params['id']
- * 		/users/:id(\\d+)       // Parameter muse be digits: Path.map('/users/:id(\\d+)')
- *							   // --> this.params['id']
- * 		/users/:id?            // Parameter is optional: Path.map('/users/:id?') 
- *							   // --> this.params['id'] || 'undefined'
- * 		/users/:id/:action     // Path.map('/users/:id/:action')
- *							   // --> this.params['id'], this.params['action']
- * 		/users/(\\d+)          // Regexp route parameter: Path.map('/users/(\\d+)')
- *							   // --> this.params[0]
- * 		/users/(\\d+)/(\\w+)   // Path.map('/users/(\\d+)/(\\w+)')
- *							   // --> this.params[0], this.params[1]
- * 		/users/:id/(\\w+)      // Named parameter and regexp parameter mixed use: Path.map('/users/:id/(\\w+)')
- *							   // --> this.params['id'], this.params[0]
- * 		/users/*               // Wildcard parameter: Path.map('/users/*') 
- *							   // --> this.params[0] || 'undefined'
- * 		['/A', '/B', '/C']	   // Array multi route, can matched any one given: Path.map(['/A', '/B', '/C'])
- *		/^#\/comments\/(\d+)$/ // Regexp route: Path.map(/^#\/comments\/(\d+)$/)
- * 
- * Other:
- * 		/users_:id_:action	  			   // /users_2_edit
- * 		/get.:id..comments\\?p=:page(\\d+) // get.1202..comments?page=1
- * 		/... as define yourself...					  
+ * 2014/12/31 -> 0.8.5 Supported legacy IE(6,7).			  
  */
-;(function(window) {
+;(function(root, factory) {
+    if(typeof define === 'function' && define.amd) {
+        define(function() {
+          // Export Path even in AMD case in case this script is loaded with
+          // others that may still expect a global Path.
+          return (root.Path = factory(root));
+        });
+    } 
+    // Next for Node.js or CommonJS.
+    else if (typeof exports !== 'undefined') {
+        //TODO 
+        // factory(root, exports);
+    } 
+    // Finally, as a browser global.
+    else {
+        root.Path = factory(root);
+    }
+
+})(typeof window !== "undefined" ? window : this, function(root) {
+
+    var isArray = function(arr) {
+        return ('[object Array]' === Object.prototype.toString.call(arr));
+    };
+    var isFunction = function(fn) {
+        return ('function' === typeof fn);
+    };
+
     var Path = {
-        'version': "0.9",
+        'version': "1.0",
+
         'map': function (path) {
-            var str_path = Path._pathToString(path);
-            if(Path.routes.defined.hasOwnProperty(str_path)) {
-                return Path.routes.defined[str_path];
+            var strPath = Path._pathToString(path);
+            if(Path.routes.defined.hasOwnProperty(strPath)) {
+                return Path.routes.defined[strPath];
             } else {
-                return new Path.core.route(path);
+                return new Path.core.Route(path);
             }
         },
         'root': function (path) {
-            Path.routes.root = path;
+            Path.routes.root = Path._getHashPath(path);
         },
         'rescue': function (fn) {
             Path.routes.rescue = fn;
         },
-        'history': {
-            'initial':{}, // Empty container for "Initial Popstate" checking variables.
-            'pushState': function(state, title, path){
-                if(Path.history.supported){
-                    if(Path.dispatch(path)){
-                        window.history.pushState(state, title, path);
-                    }
-                } else {
-                    if(Path.history.fallback){
-                        window.location.hash = "#" + path;
-                    }
-                }
-            },
-            'popState': function(event){
-                var initialPop = !Path.history.initial.popped && window.location.href == Path.history.initial.URL;
-                Path.history.initial.popped = true;
-                if(initialPop) { 
-                    return; 
-                }
-                
-                Path.dispatch(document.location.pathname);
-            },
-            'listen': function(fallback){
-                Path.history.supported = !!(window.history && window.history.pushState);
-                Path.history.fallback  = fallback;
+        'to': function(path) {
+            if(!path) return;
+            path = Path._getHashPath(path);
 
-                if(Path.history.supported){
-                    Path.history.initial.popped = ('state' in window.history);
-                    Path.history.initial.URL = window.location.href;
-                    window.onpopstate = Path.history.popState;
+            if(path == Path.routes.current) {
+                var exitRoute = Path.match(Path.routes.current);
+                if(!exitRoute) return;
+
+                isFunction(exitRoute.do_exit) && exitRoute.do_exit.call(exitRoute);
+
+                Path.routes.current = null;
+                Path.routes.previous = null;
+                Path.dispatch(path);
+            } else {
+                if(Path.history.supported) {
+                    Path.history.pushState({}, document.title, path);
                 } else {
-                    if(Path.history.fallback){
-                        for(route in Path.routes.defined){
-                            if(route.charAt(0) != "#"){
-                              Path.routes.defined["#"+route] = Path.routes.defined[route];
-                              Path.routes.defined["#"+route].path = "#"+route;
-                            }
-                        }
-                        Path.listen();
-                    }
+                    window.location.hash = Path._fillHashPath(path);
                 }
             }
         },
@@ -100,39 +81,48 @@
             return null;
         },
         'dispatch': function (passed_route) {
+            if(!passed_route) return;
+            
             var previous_route, matched_route;
-            if (Path.routes.current !== passed_route) {
+            if(Path.routes.current !== passed_route) {
                 Path.routes.previous = Path.routes.current;
                 Path.routes.current = passed_route;
 
                 matched_route = Path.match(passed_route, true);
 
-                if (Path.routes.previous) {
+                if(Path.routes.previous) {
                     previous_route = Path.match(Path.routes.previous);
-                    if (previous_route !== null && typeof previous_route.do_exit === 'function') {
-                        previous_route.do_exit();
+                    if(previous_route !== null && isFunction(previous_route.do_exit)) {
+                        previous_route.do_exit.call(previous_route);
                     }
                 }
 
-                if (matched_route !== null) {
+                if(matched_route !== null) {
                     matched_route.run();
                     return true;
                 } else {
-                    if (Path.routes.rescue !== null) {
+                    if(Path.routes.rescue !== null) {
                         Path.routes.rescue();
                     }
                 }
             }
         },
-        'listen': function () {
-            // yswang add to hack legacy IE(6,7)
+        'listen': function (options) {
+            options = options || {};
+            if(false === options.hashbang) {
+                Path.routes.options.hashbang = false;
+            }
+
+            // hack legacy IE(6,7)
             Path._hackLegacyIE();
 
-            var fn = function() {Path.dispatch(window.location.hash);};
+            var fn = function() {
+                Path.dispatch(Path._getHashPath());
+            };
 
-            if(window.location.hash === "") {
-                if (Path.routes.root !== null) {
-                    window.location.hash = Path.routes.root;
+            if(window.location.hash === '') {
+                if(Path.routes.root !== null) {
+                    window.location.hash = Path._fillHashPath(Path.routes.root);
                 }
             }
 
@@ -144,23 +134,68 @@
                 setInterval(fn, 50);
             }
 
-            if(window.location.hash !== "") {
-                Path.dispatch(window.location.hash);
+            if(window.location.hash !== '') {
+                Path.dispatch(Path._getHashPath());
+            }
+        },
+        'history': {
+            'initial':{}, // Empty container for "Initial Popstate" checking variables.
+            'pushState': function(state, title, path) {
+                if(Path.history.supported){
+                    if(Path.dispatch(path)){
+                        window.history.pushState(state, title, path);
+                    }
+                } else {
+                    if(Path.history.fallback){
+                        window.location.hash = Path._fillHashPath(path);
+                    }
+                }
+            },
+            'popState': function(event){
+                var initialPop = !Path.history.initial.popped && window.location.href == Path.history.initial.URL;
+                Path.history.initial.popped = true;
+                if(initialPop) { 
+                    return; 
+                }
+                
+                Path.dispatch(document.location.pathname);
+            },
+            'listen': function(options) {
+                options = options || {};
+                Path.history.supported = !!(window.history && window.history.pushState);
+                Path.history.fallback  = options.fallback;
+
+                if(Path.history.supported){
+                    Path.history.initial.popped = ('state' in window.history);
+                    Path.history.initial.URL = window.location.href;
+                    window.onpopstate = Path.history.popState;
+                } else {
+                    if(Path.history.fallback){
+                        Path.listen(options);
+                    }
+                }
             }
         },
         'core': {
-            'route': function (path) {
+            'Route': function (path) {
                 this.path = Path._pathToString(path);
-                // yswang
                 this.pathKeys = [];
-                this.pathRegExp = Path._pathRegExp(path, this.pathKeys, false, false);
+                this.pathRegExp = [];
 
-                this.action = null;
+                if(isArray(path)) {
+                    for(var i = 0; i < path.length; i++) {
+                        this.pathRegExp.push(Path._pathRegExp(path[i], this.pathKeys, false, false));
+                    }
+                } else {
+                    this.pathRegExp.push(Path._pathRegExp(path, this.pathKeys, false, false));
+                }
+
+                this.do_action = function(){};
                 this.do_enter = [];
-                this.do_exit = null;
+                this.do_exit = function(){};
                 this.params = {};
 
-                Path.routes.defined[Path._pathToString(path)] = this;
+                Path.routes.defined[this.path] = this;
             }
         },
         'routes': {
@@ -168,15 +203,35 @@
             'root': null,
             'rescue': null,
             'previous': null,
+            'options': {'hashbang': true},
             'defined': {}
         },
+        '_getHashPath': function(path) {
+            var _hash = path || window.location.hash;
+            if(_hash.indexOf('#!') === 0) {
+                _hash = _hash.slice(2);
+            } else if('#' === _hash.charAt(0)) {
+                _hash = _hash.slice(1);
+            }
 
-        // yswang add to support complex path route
+            var qsIndx = _hash.indexOf('?');
+            if(qsIndx >= 0) {
+                _hash = _hash.slice(0, qsIndx);
+            }
+
+            return _hash;
+        },
+        '_fillHashPath': function(path) {
+            if('#' === path.charAt(0)) {
+                return path;
+            }
+            return (Path.routes.options.hashbang ? '#!' : '#') + path;
+        },
+        // support complex path route
         '_pathToString': function(path) {
-            if(Object.prototype.toString.call(path) === '[object Array]') {
+            if(isArray(path)) {
                 return '[' + path.join(',') + ']';
             }
-             
             return path.toString();
         },
         '_pathRegExp': function(path, keys, sensitive, strict) {
@@ -184,7 +239,7 @@
                 return path;
             } 
 
-            if (Object.prototype.toString.call(path) === '[object Array]') {
+            if (isArray(path)) {
                 path = '(' + path.join('|') + ')';
             }
             
@@ -195,7 +250,7 @@
                 //.replace(/\/\(/g, '(?:/')
                 .replace(/(\/)?(\.)?:(\w+)(?:(\(.*?\)))?(\?)?(\*)?/g, function(_, slash, format, key, capture, optional, star) {
                   
-				  _keys.push({'name': key, 'optional': !! optional});
+                  _keys.push({'name': key, 'optional': !! optional});
 
                   slash = slash || '';
                  
@@ -211,11 +266,11 @@
                 .replace(/\*/g, '(.*)');
 
             // ----- important：reset index position of saved keys -----
-            if(Object.prototype.toString.call(keys) === '[object Array]' && _keys.length > 0) {
+            if(isArray(keys) && _keys.length > 0) {
                 var stack = [], group = [], paramIndexs = [];
                 for(var i = 0, len = path.length; i < len; ++i) {
                     var c = path.charAt(i), 
-                        _unescaped = path.charAt(i-1) !== '\\';
+                        _unescaped = (path.charAt(i-1) !== '\\');
                     
                     if(c === '(' && _unescaped) {
                         stack.push(c);
@@ -250,7 +305,6 @@
 
             return new RegExp('^' + path + '$', sensitive ? '' : 'i');
         },
-        // yswang add
         '_decode': function(str) {
             try {
                 return decodeURIComponent(str);
@@ -258,7 +312,7 @@
                 return str;
             }
         },
-        // yswang add hack ie < 8
+        // hack ie < 8
         '_ieFrame': null, //iframe used for legacy IE (6-7)
         '_hackLegacyIE': function() {
             if(Path._ieFrame) {
@@ -290,13 +344,13 @@
         }
     };
 
-    Path.core.route.prototype = {
+    Path.core.Route.prototype = {
         'to': function (fn) {
-            this.action = fn;
+            this.do_action = fn;
             return this;
         },
         'enter': function (fns) {
-            if (fns instanceof Array) {
+            if(fns instanceof Array) {
                 this.do_enter = this.do_enter.concat(fns);
             } else {
                 this.do_enter.push(fns);
@@ -307,33 +361,24 @@
             this.do_exit = fn;
             return this;
         },
-        'partition': function () {
-            var parts = [], options = [], re = /\(([^}]+?)\)/g, text, i;
-            while (text = re.exec(this.path)) {
-                parts.push(text[1]);
-            }
-            options.push(this.path.split("(")[0]);
-            for (i = 0; i < parts.length; i++) {
-                options.push(options[options.length - 1] + parts[i]);
-            }
-            return options;
-        },
         'run': function () {
-            var halt_execution = false, i, result, previous;
-            if (Path.routes.defined[this.path].hasOwnProperty("do_enter")) {
-                if (Path.routes.defined[this.path].do_enter.length > 0) {
-                    for (i = 0; i < Path.routes.defined[this.path].do_enter.length; i++) {
-                        result = Path.routes.defined[this.path].do_enter[i].call(this);
-                        if (result === false) {
-                            halt_execution = true;
-                            break;
-                        }
+            var halt_execution = false, _enterFn;
+            if(this.do_enter.length > 0) {
+                for(var i = 0; i < this.do_enter.length; i++) {
+                    _enterFn = this.do_enter[i];
+                    if(!_enterFn || !isFunction(_enterFn)) {
+                        continue;
+                    }
+
+                    if(false === _enterFn.call(this)) {
+                        halt_execution = true;
+                        break;
                     }
                 }
             }
 
-            if (!halt_execution) {
-                Path.routes.defined[this.path].action();
+            if(!halt_execution && isFunction(this.do_action)) {
+                this.do_action.call(this);
             }
 
             // supported legacy IE(6,7)
@@ -349,33 +394,46 @@
                 }
             }
         },
-        // yswang add route match given url path
+        // match given url path
         'match': function(path, parameterize) {
-            var m = this.pathRegExp.exec(path);
-            if(!m) {
+            if(this.pathRegExp.length == 0) {
                 return false;
-            } 
-
-            if(parameterize) {
-                var keys = this.pathKeys, keysSize = keys.length, key, val, params = [];
-                for(var i = 1, len = m.length; i < len; ++i) {
-                    key = keysSize >= i ? keys[i-1] : null;
-                    val = 'string' == typeof m[i] ? Path._decode(m[i]) : m[i];
-                    
-                    if(key && key.name) {
-                      params[key.name] = val;
-                    } else {
-                      params.push(val);
-                    }
-                }
-
-                this.params = params;
             }
 
-            return true;
+            for(var i = 0; i < this.pathRegExp.length; i++) {
+                var m = this.pathRegExp[i].exec(path);
+                if(m) {
+                    if(parameterize) {
+                        var keys = this.pathKeys, keysSize = keys.length, key, val, params = [];
+                        for(var i = 1, len = m.length; i < len; ++i) {
+                            key = keysSize >= i ? keys[i-1] : null;
+                            val = 'string' == typeof m[i] ? Path._decode(m[i]) : m[i];
+                            
+                            if(key && key.name) {
+                              params[key.name] = val;
+                            } else {
+                              params.push(val);
+                            }
+                        }
+
+                        this.params = params;
+                    }
+
+                    return true;
+                }
+            }
+
+            return false;
         }
     };
 
-    !this.Path && (this.Path = Path);
+    // Support no conflict
+    // Map over Path in case of overwrite
+    var previousPath = root.Path;
+    Path.noConflict = function() {
+        root.Path = previousPath;
+        return Path;
+    };
 
-})(window);
+    return Path;
+});

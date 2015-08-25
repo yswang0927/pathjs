@@ -12,60 +12,71 @@
 		};
 
 		var hrefs = [
-		    "#A",
+		  "#A",
 			"#B",
 			"#C",
 			"#D1",
-            "#D2",
+      "#D2",
 			"#E/params/1/parse",
 			"#E/params/2/parse",
 			"#E/params/3/check",
 			"#F",
 			"#G",
-	        "#H",
-	        "#H/10",
-	        "#H/10/20",
-	        "#I/10",
-	        "#I/abc",
-	        "#J/20",
-	        "#J/20/change",
-	        "#K/40/50/change"
-	    ];
+      "#H",
+      "#H/10",
+      "#H/10/20",
+      "#I/10",
+      "#I/abc",
+      "#J/20",
+      "#J/20/change",
+      "#K/40/50/change",
+      "#/L",
+      "#/M",
+      "#/N",
+      "#1_2_3",
+      "#1!2!3",
+      "#1!2!3!4",
+      "#/100",
+      "#/200",
+      "#/300a"
+	  ];
 		var index = 0;
 		var timer = null;
 		
 		function update(str){
 		    var d = document.getElementById("actual");
-			text = d.innerHTML;
-			d.innerHTML = d.innerHTML + ((text == "") ? "" : "::") + str;
+				text = d.innerHTML;
+				d.innerHTML = d.innerHTML + ((text == "") ? "" : "::") + str;
 		}
 		
 		function run_route(){
 		    if(index <= hrefs.length){
-                if(index == hrefs.length){
-                    window.history.go(-1);
-                } else {
-                    location.hash = hrefs[index];
-                }
+          if(index == hrefs.length){
+              window.history.go(-1);
+          } else {
+              //location.hash = hrefs[index];
+              Path.to(hrefs[index]);
+          }
 			    index++;
 			} else {
 			    clearInterval(timer);
 				
-				var expected = document.getElementById("expected");
-				var actual = document.getElementById("actual");
-				var grade = document.getElementById("grade");
-				if(expected.innerHTML.trim() == actual.innerHTML.trim()){
-				    grade.innerHTML = "PASS";
-					grade.style.color = "#00FF00";
-				} else {
-				    grade.innerHTML = "FAIL";
-					grade.style.color = "#FF0000";
-				}
+					var expected = document.getElementById("expected");
+					var actual = document.getElementById("actual");
+					var grade = document.getElementById("grade");
+
+					if(expected.innerHTML.trim() == actual.innerHTML.trim()){
+					  grade.innerHTML = "PASS";
+						grade.style.color = "#00FF00";
+					} else {
+					  grade.innerHTML = "FAIL";
+						grade.style.color = "#FF0000";
+					}
 			}
 		}
 		
 		function define_routes(){
-		    Path.map("#A").enter(function(){
+		  Path.map("A").enter(function(){
 			    update("A[enter]");
 			}).to(function(){
 			    update("A[action]");
@@ -73,15 +84,15 @@
 			    update("A[exit]");
 			});
 			
-			Path.map("#B").to(function(){
+			Path.map("B").to(function(){
 			    update("B[action]");
 			});
 			
-			Path.map("#B").enter(function(){
+			Path.map("B").enter(function(){
 			    update("B[enter]");
 			})
 			
-			Path.map("#C").to(function(){
+			Path.map("C").to(function(){
 			    update("C[action]");
 			}).exit(function(){
 			    update("C[exit]");
@@ -89,29 +100,29 @@
 			
 			// No map for #D1 or #D2.  This checks that our rescue method works, and works multiple times in succession.
 			
-			Path.map("#E/params/:id/parse").to(function(){
+			Path.map("E/params/:id/parse").to(function(){
 			    update("E[action](parse id=" + this.params['id'] + ")");
 			});
 			
-			Path.map("#E/params/:id/parse").enter(function(){
+			Path.map("E/params/:id/parse").enter(function(){
 			    update("E[enter](parse id=" + this.params['id'] + ")");
 			});
 			
-			Path.map("#E/params/:id/check").to(function(){
+			Path.map("E/params/:id/check").to(function(){
 			    update("E[action](check id=" + this.params['id'] + ")");
 			});
 			
-			Path.map("#E/params/:id/check").exit(function(){
+			Path.map("E/params/:id/check").exit(function(){
 			    update("E[exit](check id=" + this.params['id'] + ")");
 			});
 			
-			Path.map("#F").enter(function(){
+			Path.map("F").enter(function(){
 			    update("F[enter]");
 			}).to(function(){
 			    update("F[action]");
 			});
 			
-			Path.map("#G").enter(function(){
+			Path.map("G").enter(function(){
 			    update("G[enter 1]");
 			}).enter(function(){
 			    update("G[enter 2]");
@@ -127,37 +138,50 @@
 			    update("G[action - NOT HIT]");
 			});
 
-            Path.map("#H/:id_one?/:id_two?").to(function(){
-	            var id_one = this.params["id_one"] || "N/A";
-	            var id_two = this.params["id_two"] || "N/A";
-                update("H(one=" + id_one + ", two=" + id_two + ")");
-            });
-			
-	        Path.map("#I/:id(\\d+)").to(function(){
-			    update("I[action](check number id=" + this.params['id'] + ")");
+      Path.map("H/:id_one?/:id_two?").to(function(){
+        var id_one = this.params["id_one"] || "N/A";
+        var id_two = this.params["id_two"] || "N/A";
+          update("H(one=" + id_one + ", two=" + id_two + ")");
+      });
+	
+      Path.map("I/:id(\\d+)").to(function(){
+	    	update("I[action](check number id=" + this.params['id'] + ")");
 			});
 
-			Path.map("#J/(\\d+)").to(function(){
+			Path.map("J/(\\d+)").to(function(){
 			    update("J[action](check params[0]=" + this.params[0] + ")");
 			});
 
-			Path.map("#J/(\\d+)/(\\w+)").to(function(){
+			Path.map("J/(\\d+)/(\\w+)").to(function(){
 			    update("J[action](check params[0]=" + this.params[0] + ", params[1]="+ this.params[1] +")");
 			});
 
-			Path.map("#K/:id/(\\d+)/(\\w+)").to(function(){
+			Path.map("K/:id/(\\d+)/(\\w+)").to(function(){
 			    update("K[action](check params['id']=" + this.params['id'] + ", params[0]=" + this.params[0] + ", params[1]="+ this.params[1] +")");
 			});
 
+			Path.map(['/L', '/M']).to(function() {
+				update('L|M(action)');
+			});
 
-			Path.rescue(function(){
+			Path.map([/^(\d+)_(\d+)_(\d+)$/, /^(\d+)!(\d+)!(\d+)$/]).to(function() {
+				update('__!!(action)');
+			});
+
+			Path.map(/^\/(\d+)$/).to(function() {
+				update(this.params[0] + '(action)');
+			});
+
+			Path.rescue(function() {
 			    update("RESCUE");
 			});
 			
-			Path.root("#F");
-			Path.listen();
-		    timer = setInterval(run_route, 500);
-	    }
+			Path.root("F");
+
+			Path.listen({'hashbang': false});
+		
+		  timer = setInterval(run_route, 300);
+	  }
 		</script>
 		
 		<style type="text/css">
@@ -178,7 +202,7 @@
 				is not suitable for use. The expected test results are as follows:
 			</p>
 			<table>
-			    <tr><td><b>Token</b></td>          <td><b>Reason</b></td></tr>
+		    <tr><td><b>Token</b></td>          <td><b>Reason</b></td></tr>
 				<tr><td>F[enter]</td>              <td>Enter method of F, as it is root</td></tr>
 				<tr><td>F[action]</td>             <td>True action of F, as it is root</td></tr>
 				<tr><td>A[enter]</td>              <td>Enter method of A, as it is looped</td></tr>
@@ -206,18 +230,26 @@
 				<tr><td>H(one=10, two=N/A)</td>    <td>Optional parameters with one optional part submitted</td></tr>
 				<tr><td>H(one=10, two=20)</td>     <td>Optional parameters two levels deep</td></tr>
                 
-                <tr><td>I[action](check number id=10)</td>     <td>使用\d+正则限制命名参数类型：I/:id(\\d+)</td></tr>
-                <tr><td>RESCUE</td>     <td>I/abc 不匹配 I/:id(\\d+) 定义</td></tr>
-                <tr><td>J[action](check params[0]=20)</td>     <td>完全使用正则作为参数定义：J/(\\d+)</td></tr>
-                <tr><td>J[action](check params[0]=20, params[1]=change)</td>     <td>完全使用正则作为参数定义：J/(\\d+)/(\\w+)</td></tr>
-                <tr><td>K[action](check params['id']=40, params[0]=50, params[1]=change)</td>     <td>混合使用命名参数和完整正则参数：K/:id/(\\d+)/(\\w+)</td></tr>
-
-                <tr><td>J[action](check params[0]=20, params[1]=change)</td>    <td>Testing "back" functionality</td></tr>
+        <tr><td>I[action](check number id=10)</td>     <td>Use RegExp restrict the parameter's type：I/:id(\\d+)</td></tr>
+        <tr><td>RESCUE</td>     <td>`I/abc` unmatch map path: `I/:id(\\d+)`.</td></tr>
+        <tr><td>J[action](check params[0]=20)</td>     <td>Use RegExp define parameters：J/(\\d+)</td></tr>
+        <tr><td>J[action](check params[0]=20, params[1]=change)</td>     <td>True action, Use RegExp define parameters：J/(\\d+)/(\\w+)</td></tr>
+        <tr><td>K[action](check params['id']=40, params[0]=50, params[1]=change)</td>     <td>Mixed named parameters and RegExp parameters：K/:id/(\\d+)/(\\w+)</td></tr>
+				<tr><td>L|M(action)</td>    <td>True action of /L</td></tr>
+				<tr><td>L|M(action)</td>    <td>True action of /M</td></tr>
+				<tr><td>RESCUE</td>  				<td>Rescue a route that wasn't found (/N)</td></tr>
+				<tr><td>__!!(action)</td>    <td>True action of 1_2_3</td></tr>
+				<tr><td>__!!(action)</td>    <td>True action of 1!2!3</td></tr>
+        <tr><td>RESCUE</td>          <td>Rescue a route that wasn't found (1!2!3!4)</td></tr>
+        <tr><td>100(action)</td>    <td>True action of /100 </td></tr>
+        <tr><td>200(action)</td>    <td>True action of /200 </td></tr>
+        <tr><td>RESCUE</td>          <td>Rescue a route that wasn't found (/300a)</td></tr>
+        <tr><td>200(action)</td>    <td>Testing "back" functionality</td></tr>
 			</table>
 		</div><br /><br />
 		<div id="console">
-		    <h3>Expected</h3>
-		    <div id="expected">F[enter]::F[action]::A[enter]::A[action]::A[exit]::B[enter]::B[action]::C[action]::C[exit]::RESCUE::RESCUE::E[enter](parse id=1)::E[action](parse id=1)::E[enter](parse id=2)::E[action](parse id=2)::E[action](check id=3)::E[exit](check id=3)::F[enter]::F[action]::G[enter 1]::G[enter 2]::G[enter 3]::G[enter 4]::H(one=N/A, two=N/A)::H(one=10, two=N/A)::H(one=10, two=20)::I[action](check number id=10)::RESCUE::J[action](check params[0]=20)::J[action](check params[0]=20, params[1]=change)::K[action](check params['id']=40, params[0]=50, params[1]=change)::J[action](check params[0]=20, params[1]=change)</div>
+	    <h3>Expected</h3>
+	    <div id="expected">F[enter]::F[action]::A[enter]::A[action]::A[exit]::B[enter]::B[action]::C[action]::C[exit]::RESCUE::RESCUE::E[enter](parse id=1)::E[action](parse id=1)::E[enter](parse id=2)::E[action](parse id=2)::E[action](check id=3)::E[exit](check id=3)::F[enter]::F[action]::G[enter 1]::G[enter 2]::G[enter 3]::G[enter 4]::H(one=N/A, two=N/A)::H(one=10, two=N/A)::H(one=10, two=20)::I[action](check number id=10)::RESCUE::J[action](check params[0]=20)::J[action](check params[0]=20, params[1]=change)::K[action](check params['id']=40, params[0]=50, params[1]=change)::L|M(action)::L|M(action)::RESCUE::__!!(action)::__!!(action)::RESCUE::100(action)::200(action)::RESCUE::200(action)</div>
 		   
 			<h3>Actual</h3>
 			<div id="actual"></div>
