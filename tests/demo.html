@@ -67,10 +67,10 @@
 		<div class="nav">
 			<ul>
 				<li><a href="#!/about">About</a></li>
-				<li><a href="#!/page">Page</a></li>
-				<li><a href="#!/page/Page-1">Page-1</a></li>
-				<li><a href="#!/page/页面-2">页面-2</a></li>
-				<li><a href="#!/page/页面-3">页面-3</a></li>
+				<li><a href="#!/page?pid=0&tags=java&tags=javascript">Page</a></li>
+				<li><a href="#!/page/Page-1?pid=100&tags=python">Page-1</a></li>
+				<li><a href="#!/page/页面-2?pid=200&tags=css">页面-2</a></li>
+				<li><a href="#!/page/页面-3?pid=300&tags=nginx">页面-3</a></li>
 				<li><a href="#!get.1234.mime">get.1234.mime</a></li>
 				<li><a href="#!get.586985.home">get.586985.home</a></li>
 				<li><a href="#!get.5869ab.home">get.5869ab.home - 不是数字</a></li>
@@ -135,7 +135,7 @@ Path.map(['/a', '/b', '/c']).to(function() {
 });
 
 // 完全使用一个正则对象表示URL路径
-Path.map(/^#\/(\d+)$/).to(function() {
+Path.map(/^\/(\d+)$/).to(function() {
 	
 });
 
@@ -170,9 +170,13 @@ Path.rescue(function() {
 		$id('content').className = 'page-out';
 	});
 
-	Path.map('/page/:pageid?').to(function() {
-		var pid = this.params['pageid'];
-		updateContent.call(this, 'this.params[\'pageid\'] = '+ (pid || 'NaN'));
+	Path.map('/page/:page_name?').to(function() {
+		var pname = this.params['page_name'];
+		updateContent.call(this, 
+			'this.params[\'page_name\'] = '+ (pname || 'NaN')
+			+ '<br> this.params[\'pid\'] = '+ (this.params['pid'] || 'NaN')
+			+ '<br> this.params[\'tags\'] = '+ (this.params['tags'] || 'NaN')
+		);
 	});
 
 	Path.map('get.:bid(\\d+).:btype').to(function() {

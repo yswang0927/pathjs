@@ -12,13 +12,13 @@
 		};
 
 		var hrefs = [
-		  "#A",
-			"#B",
+		  "#A?flag=1",
+			"#B?k1=100&k2=201&k2=202",
 			"#C",
 			"#D1",
       "#D2",
-			"#E/params/1/parse",
-			"#E/params/2/parse",
+			"#E/params/1/parse?id=101",
+			"#E/params/2/parse?id=202",
 			"#E/params/3/check",
 			"#F",
 			"#G",
@@ -79,13 +79,13 @@
 		  Path.map("A").enter(function(){
 			    update("A[enter]");
 			}).to(function(){
-			    update("A[action]");
+			    update("A[action][flag="+ this.params.flag +"]");
 			}).exit(function(){
 			    update("A[exit]");
 			});
 			
 			Path.map("B").to(function(){
-			    update("B[action]");
+			    update("B[action][k1="+ this.params.k1 +"][k2="+ this.params.k2 +"]");
 			});
 			
 			Path.map("B").enter(function(){
@@ -206,18 +206,18 @@
 				<tr><td>F[enter]</td>              <td>Enter method of F, as it is root</td></tr>
 				<tr><td>F[action]</td>             <td>True action of F, as it is root</td></tr>
 				<tr><td>A[enter]</td>              <td>Enter method of A, as it is looped</td></tr>
-				<tr><td>A[action]</td>             <td>True action of A, as it is looped</td></tr>
+				<tr><td>A[action][flag=1]</td>     <td>True action of A, as it is looped, with querystring param of flag=1</td></tr>
 				<tr><td>A[exit]</td>               <td>Exit method of A, as we move to next route</td></tr>
 				<tr><td>B[enter]</td>              <td>Enter method of B, as it is looped</td></tr>
-				<tr><td>B[action]</td>             <td>True action of B, as it is looped</td></tr>
+				<tr><td>B[action][k1=100][k2=201,202]</td>             <td>True action of B, as it is looped, with querystring param of k1=100, k2=201, k2=202</td></tr>
 				<tr><td>C[action]</td>             <td>True action of C</td></tr>
 				<tr><td>C[exit]</td>               <td>Exit method of C, as we move to next route</td></tr>
 				<tr><td>RESCUE</td>                <td>Rescue a route that wasn't found (D1)</td></tr>
 				<tr><td>RESCUE</td>                <td>Rescue a route that wasn't found (D2)</td></tr>
-				<tr><td>E[enter](parse id=1)</td>  <td>Enter method of a param parsed route</td></tr>
-				<tr><td>E[action](parse id=1)</td> <td>True action of the route, with param of id=1</td></tr>
-				<tr><td>E[enter](parse id=2)</td>  <td>Enter method of the same route again</td></tr>
-				<tr><td>E[action](parse id=2)</td> <td>True action of the route, with param of id=2</td></tr>
+				<tr><td>E[enter](parse id=1,101)</td>  <td>Enter method of a param parsed route, with path param of id=1 and querystring param of id=101</td></tr>
+				<tr><td>E[action](parse id=1,101)</td> <td>True action of the route, with path param of id=1 and querystring param of id=101</td></tr>
+				<tr><td>E[enter](parse id=2,202)</td>  <td>Enter method of the same route again, with path param of id=2 and querystring param of id=202</td></tr>
+				<tr><td>E[action](parse id=2,202)</td> <td>True action of the route, with path param of id=2 and querystring param of id=202</td></tr>
 				<tr><td>E[action](check id=3)</td> <td>True action of the next route, with param id=3</td></tr>
 				<tr><td>E[exit](check id=3)</td>   <td>Exit method of parameterized route</td></tr>
 				<tr><td>F[enter]</td>              <td>Enter method of F again, our final route</td></tr>
@@ -249,7 +249,7 @@
 		</div><br /><br />
 		<div id="console">
 	    <h3>Expected</h3>
-	    <div id="expected">F[enter]::F[action]::A[enter]::A[action]::A[exit]::B[enter]::B[action]::C[action]::C[exit]::RESCUE::RESCUE::E[enter](parse id=1)::E[action](parse id=1)::E[enter](parse id=2)::E[action](parse id=2)::E[action](check id=3)::E[exit](check id=3)::F[enter]::F[action]::G[enter 1]::G[enter 2]::G[enter 3]::G[enter 4]::H(one=N/A, two=N/A)::H(one=10, two=N/A)::H(one=10, two=20)::I[action](check number id=10)::RESCUE::J[action](check params[0]=20)::J[action](check params[0]=20, params[1]=change)::K[action](check params['id']=40, params[0]=50, params[1]=change)::L|M(action)::L|M(action)::RESCUE::__!!(action)::__!!(action)::RESCUE::100(action)::200(action)::RESCUE::200(action)</div>
+	    <div id="expected">F[enter]::F[action]::A[enter]::A[action][flag=1]::A[exit]::B[enter]::B[action][k1=100][k2=201,202]::C[action]::C[exit]::RESCUE::RESCUE::E[enter](parse id=1,101)::E[action](parse id=1,101)::E[enter](parse id=2,202)::E[action](parse id=2,202)::E[action](check id=3)::E[exit](check id=3)::F[enter]::F[action]::G[enter 1]::G[enter 2]::G[enter 3]::G[enter 4]::H(one=N/A, two=N/A)::H(one=10, two=N/A)::H(one=10, two=20)::I[action](check number id=10)::RESCUE::J[action](check params[0]=20)::J[action](check params[0]=20, params[1]=change)::K[action](check params['id']=40, params[0]=50, params[1]=change)::L|M(action)::L|M(action)::RESCUE::__!!(action)::__!!(action)::RESCUE::100(action)::200(action)::RESCUE::200(action)</div>
 		   
 			<h3>Actual</h3>
 			<div id="actual"></div>

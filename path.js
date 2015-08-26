@@ -1,5 +1,6 @@
 /*!
  * 山哥(wangys0927@gmail.com) at:
+ * 2015/08/26 -> 1.0.1 `this.params` supported querystring parameters.
  * 2015/08/25 -> 1.0 See README.md
  * 2015/01/16 -> 0.9 Use new route path parser, now it's powerful!	
  * 2015/01/04 -> 0.8.6 Upgrade route path parser.
@@ -28,8 +29,47 @@
     var isArray = function(arr) {
         return ('[object Array]' === Object.prototype.toString.call(arr));
     };
+
     var isFunction = function(fn) {
         return ('function' === typeof fn);
+    };
+
+    var decode = function (s) {
+        try {
+           return decodeURIComponent(s.replace(/\+/g, ' '));
+        } catch(e) {
+            return s;
+        }
+    };
+
+    var parseQueryString = function(url) {
+        if(!url) {
+            return {};
+        }
+
+        var queryStr = url.slice(url.indexOf('?') + 1),
+            qs = queryStr.split('&');
+        if(qs.length === 0) {
+            return {};
+        }
+
+        var params = {}, kv, k, v;
+        for(var i = 0, len = qs.length; i < len; i++) {
+            kv = qs[i].split('=');
+            k = decode(kv[0]).replace(/^\s+|\s+$/g, '');
+            if(!k) continue;
+            v = kv.length > 1 ? decode(kv[1]) : '';
+
+            if(!params.hasOwnProperty(k)) {
+                params[k] = v;
+            } else if(isArray(params[k])) {
+                params[k].push(v);
+            } else {
+                params[k] = [params[k], v];
+            }
+        }
+
+        return params;
     };
 
     var Path = {
@@ -44,14 +84,13 @@
             }
         },
         'root': function (path) {
-            Path.routes.root = Path._getHashPath(path);
+            Path.routes.root = path;
         },
         'rescue': function (fn) {
             Path.routes.rescue = fn;
         },
         'to': function(path) {
             if(!path) return;
-            path = Path._getHashPath(path);
 
             if(path == Path.routes.current) {
                 var exitRoute = Path.match(Path.routes.current);
@@ -74,7 +113,7 @@
             var route = null;
             for (var _dpath in Path.routes.defined) {
                 route = Path.routes.defined[_dpath];
-                if(route && route.match(path, parameterize)) {
+                if(route.match(path, parameterize)) {
                     return route;
                 } 
             }
@@ -117,7 +156,7 @@
             Path._hackLegacyIE();
 
             var fn = function() {
-                Path.dispatch(Path._getHashPath());
+                Path.dispatch(window.location.hash);
             };
 
             if(window.location.hash === '') {
@@ -135,7 +174,7 @@
             }
 
             if(window.location.hash !== '') {
-                Path.dispatch(Path._getHashPath());
+                Path.dispatch(window.location.hash);
             }
         },
         'history': {
@@ -305,13 +344,6 @@
 
             return new RegExp('^' + path + '$', sensitive ? '' : 'i');
         },
-        '_decode': function(str) {
-            try {
-                return decodeURIComponent(str);
-            } catch (e) {
-                return str;
-            }
-        },
         // hack ie < 8
         '_ieFrame': null, //iframe used for legacy IE (6-7)
         '_hackLegacyIE': function() {
@@ -399,20 +431,48 @@
             if(this.pathRegExp.length == 0) {
                 return false;
             }
-
+            var _hashPath = Path._getHashPath(path);
             for(var i = 0; i < this.pathRegExp.length; i++) {
-                var m = this.pathRegExp[i].exec(path);
+                var m = this.pathRegExp[i].exec(_hashPath);
                 if(m) {
                     if(parameterize) {
                         var keys = this.pathKeys, keysSize = keys.length, key, val, params = [];
                         for(var i = 1, len = m.length; i < len; ++i) {
                             key = keysSize >= i ? keys[i-1] : null;
-                            val = 'string' == typeof m[i] ? Path._decode(m[i]) : m[i];
+                            val = 'string' == typeof m[i] ? decode(m[i]) : m[i];
                             
                             if(key && key.name) {
-                              params[key.name] = val;
+                                //params[key.name] = val;
+                                if(!params.hasOwnProperty(key.name)) {
+                                    params[key.name] = val;
+                                } else if(isArray(params[key.name])) {
+                                    params[key.name].push(val);
+                                } else {
+                                    params[key.name] = [params[key.name], val];
+                                }
                             } else {
-                              params.push(val);
+                                params.push(val);
+                            }
+                        }
+
+                        // merge hash querystring parameter
+                        var queryParams = parseQueryString(path);
+                        for(var p in queryParams) {
+                            var qv = queryParams[p];
+                            if(!params.hasOwnProperty(p)) {
+                                params[p] = qv;
+                            } else if(isArray(params[p])) {
+                                if(isArray(qv)) {
+                                    params[p] = params[p].concat(qv);
+                                } else {
+                                    params[p].push(qv);
+                                }
+                            } else {
+                                if(isArray(qv)) {
+                                    params[p] = [params[p]].concat(qv);
+                                } else {
+                                    params[p] = [params[p], qv];
+                                }
                             }
                         }
 
