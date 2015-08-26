@@ -73,7 +73,7 @@
     };
 
     var Path = {
-        'version': "1.0",
+        'version': "1.0.1",
 
         'map': function (path) {
             var strPath = Path._pathToString(path);
