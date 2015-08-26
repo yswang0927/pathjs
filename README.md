@@ -3,10 +3,10 @@
 * (V0.9) Use new powerful route parser.
 * (V1.0) Support AMD loader.
 * (V1.0) The path does not need hash tag or hashbang tag prefix defined in `Path.map()`.
-* (V1.0) Use hashbang tag default.
+* (V1.0) Use hashbang tag default. If you want to use hash tag, only just do: `Path.listen({hashbang:false})`.
 * (V1.0) Add method `Path.to(path)` to forward path.
 * (V1.0) `Path.listen()` method add optional parameter: `{hashbang: true|false}`.
-* (V1.0) `Path.history.listen()` method use new optional parameter: `{hashbang: true|false, fallback: true|false}`
+* (V1.0) `Path.history.listen()` method use new optional parameter: `{hashbang: true|false, fallback: true|false}`.
 * (V1.0.1) `this.params` supported parse QueryString parameters.
 
 # PathJS #
