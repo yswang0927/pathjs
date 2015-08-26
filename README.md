@@ -7,6 +7,7 @@
 * (V1.0) Add method `Path.to(path)` to forward path.
 * (V1.0) `Path.listen()` method add optional parameter: `{hashbang: true|false}`.
 * (V1.0) `Path.history.listen()` method use new optional parameter: `{hashbang: true|false, fallback: true|false}`
+* (V1.0.1) `this.params` supported parse QueryString parameters.
 
 # PathJS #
 
